@@ -1,19 +1,8 @@
-import curses
 import debug
 
 # I J L O S T Z
 
-# init colour pairs
-
-def initpairs():
-    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_GREEN) # 1 is green
-    curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLUE) # 2 is blue
-    curses.init_pair(3, curses.COLOR_RED, curses.COLOR_RED) # 3 is red
-    curses.init_pair(4, curses.COLOR_MAGENTA, curses.COLOR_MAGENTA) # 4 is magenta
-    curses.init_pair(5, curses.COLOR_YELLOW, curses.COLOR_YELLOW) # 5 is yellow
-    curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_CYAN) # 6 is cyan
-    curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_WHITE) # 7 is white
-
+# Colour constants
 C_GREEN = 1
 C_BLUE = 2
 C_RED = 3

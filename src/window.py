@@ -16,7 +16,7 @@ class Window:
         self.window = stdscr # this is stdscr
         self.maxy, self.maxx = self.window.getmaxyx()
         # Configurable size?
-        self.sizey = 30
+        self.sizey = 25
         self.sizex = 27
         self.drawWinBorder()
         # The grid will be a dictionary of "y: [(x, c), (x, c), (x, c), (x, c), (x, c), ...]" positions. c stands for colour.
@@ -25,7 +25,7 @@ class Window:
     def drawWinBorder(self):
         # Draw the window's border
         self.starty = y = int((self.maxy / 2) - self.sizey / 2)
-        self.startx = x = int((self.maxx / 2) - (self.sizex / 2) - 5)
+        self.startx = x = int((self.maxx / 2) - (self.sizex / 2) - 6)
         self.endy = endy = y + self.sizey
         self.endx = endx = x + self.sizex
         # Draw the corners
