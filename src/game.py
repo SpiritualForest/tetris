@@ -7,9 +7,10 @@ import window
 import debug
 
 # TODO: implement levels and AI. Improve display. Add stats.
-# TODO: encapsulate the main loop's functionality so that it's not totally shit.
+# TODO: allow game.dropblock() to be triggered when a user repeatedly presses down key on a collision.
 # FIXME: IMPROVE READABILITIY!!!
 # FIXME: No pause?
+# FIXME: interval reduction on 10 lines causes the game to freeze
 
 # Movement origins - we need this to determine whether the player caused the move,
 # or the game moved the blocks downwards automatically.
@@ -141,9 +142,9 @@ class Game:
                 return
         # If we reached here, the line is completed.
         self.lines += 1
-        if self.lines < 100 and self.lines % 10 == 0:
+        #if self.lines < 100 and self.lines % 10 == 0:
             # 10 more lines completed. Increase level by decreasing the interval time.
-            self.interval -= 0.100
+            #self.interval -= 0.100
         self.removeline(y)
 
     def removeline(self, y):
