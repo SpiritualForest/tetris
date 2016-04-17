@@ -17,6 +17,8 @@ D_RIGHT = "right"
 D_DOWN = "down"
 D_UP = "up"
 
+# FIXME: Coordinates pushing in Block.shiftCoordinates() possibly causes a major bug where the piece can no longer move downwards.
+
 class Block:
     def __init__(self, rangey, rangex):
         self.oldcoordinates = {} # Used for updating the screen

@@ -1,15 +1,16 @@
-# System import
+# System-wide imports
 import curses
-import random
 import select
 import time
 import sys
-# Local import
+# Local (personal) imports
 import game
 import debug
-        
-# init colour pairs
 
+# TODO: Completely refactor the main loop, and clean up code.
+# FIXME: Pause the automatic drop when the player presses down, restart it when the player doesn't move the object downwards.
+
+# init colour pairs
 def initpairs():
     # Initialize the curses colour pairs. Yes, I know this tuple is ugly.
     colours = (curses.COLOR_GREEN, curses.COLOR_BLUE,
@@ -18,18 +19,23 @@ def initpairs():
     for i, colour in enumerate(colours):
         curses.init_pair(i + 1, colour, colour)
 
-def main():
+def initCurses():
     stdscr = curses.initscr()
     stdscr.keypad(True)
     curses.noecho()
     curses.cbreak()
+    curses.start_color()
     try:
-        # Make the cursor invisible. Continue anyway if impossible
+        # Make the cursor invisible. Continue anyway if impossible.
         curses.curs_set(0)
     except curses.error:
         pass
-    # Start colour and initialize pairs
-    curses.start_color()
+    # Return the stdscr window object
+    return stdscr
+
+def main():
+    # Initialize curses and get the window object
+    stdscr = initCurses()
     initpairs()
     # Create a game object and start the game
     gameObject = game.Game(stdscr)
@@ -42,18 +48,11 @@ def main():
                 # Top line reached. Cannot spawn object. Game must end.
                 gameObject.gamerunning = 0
                 return
-            windowrangey = (windowObject.starty, windowObject.endy)
-            windowrangex = (windowObject.startx, windowObject.endx)
             blockObj = gameObject.spawnBlock()
-            gameObject.setBlock(blockObj(windowrangey, windowrangex))
+            gameObject.setBlock(blockObj(windowObject.rangey, windowObject.rangex))
         else:
             windowObject.draw(gameObject.blockObj.coordinates, gameObject.blockObj.colour)
             r, o, e = select.select([sys.stdin], [], [], 0.01)
-            currenttime = int(time.time())
-            if currenttime == interval:
-                gameObject.movementOrigin = game.O_GAME
-                gameObject.move(curses.KEY_DOWN)
-                interval = currenttime + gameObject.interval
             mwp = gameObject.handleInput(r) # method with params
             if mwp is None:
                 # No command found

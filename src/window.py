@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import debug
 import curses
-# Window class
 
 # Window border characters - found these at https://en.wikipedia.org/wiki/Box-drawing_character
 WB_UL = "┌" # Upper left
@@ -12,22 +11,42 @@ WB_WALL_V = "│" # "Window Border Wall Vertical" - y
 WB_WALL_H = "─" # "Window Border Wall Horizontal" - x
 
 class Window:
-    def __init__(self, stdscr):
+    def __init__(self, stdscr, yposition=0, xposition=6, sizey=25, sizex=27):
+        # By default we create a game window. However, there could be other types of windows as well.
         self.window = stdscr # this is stdscr
-        self.maxy, self.maxx = self.window.getmaxyx()
+        self.stdscrmaxy, self.stdscrmaxx = self.window.getmaxyx()
         # Configurable size?
-        self.sizey = 25
-        self.sizex = 27
-        self.drawWinBorder()
+        self.sizey = sizey
+        self.sizex = sizex
+        self.initWindow(yposition, xposition)
         # The grid will be a dictionary of "y: [(x, c), (x, c), (x, c), (x, c), (x, c), ...]" positions. c stands for colour.
         self.grid = {}
 
+    def initWindow(self, yposition, xposition):
+        # Initializes the window
+        self.starty = int((self.stdscrmaxy / 2) - (self.sizey / 2) - yposition)
+        self.startx = int((self.stdscrmaxx / 2) - (self.sizex / 2) - xposition)
+        self.endy = self.starty + self.sizey
+        self.endx = self.startx + self.sizex
+        self.rangey = (self.starty, self.endy)
+        self.rangex = (self.startx, self.endx)
+        self.drawWinBorder()
+
+    def reposition(self, y, x):
+        # Resets the window's startx and starty,
+        # and repositions the window according to the size.
+        self.startx = x
+        self.starty = y
+        self.endx = x + self.sizex
+        self.endy = y + self.sizey
+        # TODO: rewrite grid coordinates here. Otherwise display gets fucked when this method is called.
+
     def drawWinBorder(self):
-        # Draw the window's border
-        self.starty = y = int((self.maxy / 2) - self.sizey / 2)
-        self.startx = x = int((self.maxx / 2) - (self.sizex / 2) - 6)
-        self.endy = endy = y + self.sizey
-        self.endx = endx = x + self.sizex
+        # Draws the window's borders
+        y = self.starty
+        x = self.startx
+        endy = self.endy
+        endx = self.endx        
         # Draw the corners
         self.window.addstr(y, x, WB_UL)
         self.window.addstr(endy, x, WB_BL)
@@ -68,4 +87,3 @@ class Window:
             for xpos in grid[y]:
                 x, colour = xpos
                 self.window.addstr(y, x, "#", curses.color_pair(colour))
-

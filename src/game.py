@@ -1,6 +1,7 @@
 # System-wide imports
 import random
 import curses
+import time
 # Local (personal) imports
 import block
 import window
@@ -9,7 +10,7 @@ import debug
 # TODO: implement levels and AI. Improve display. Add stats.
 # TODO: allow game.dropblock() to be triggered when a user repeatedly presses down key on a collision.
 # FIXME: IMPROVE READABILITIY!!!
-# FIXME: No pause?
+# FIXME: implement collision check on rotations.
 # FIXME: interval reduction on 10 lines causes the game to freeze
 
 # Movement origins - we need this to determine whether the player caused the move,
@@ -40,16 +41,16 @@ class Game:
             return True
 
     def spawnBlock(self):
-        b = self.blocks[random.randint(0, 6)]
+        b = self.blocks[random.randint(4, 5)]
         return b
 
     def handleInput(self, r):
-        # FIXME: this method only takes input from sys.stdin (the player)
+        # FIXME: Totally reimplement this method
         if r:
             key = self.windowObject.window.getch()
             if key in (curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_DOWN):
                 # Movement
-                self.movementOrigin = O_PLAYER
+                self.movementOrigin = O_GAME # For testing.
                 return (self.move, key)
             elif key == curses.KEY_UP:
                 # Rotation
@@ -123,29 +124,23 @@ class Game:
                     # y position doesn't exist. We must create it.
                     self.windowObject.grid[y] = newxes
                 newxes = []
-            # Check for line completion and "unscope" the block object
-            self.isCompleted(y)
+            # Check for line completion
+            if self.isCompleted(y):
+                self.removeline(y)
+        # "Unscope" the block object
         self.setBlock(None)
     
     def isCompleted(self, y):
-        # Checks if all the values between startx and endx are present on grid line y.
-        # If present, the line has been completed.
+        # The grid is a dictionary of y: (x, c) tuples with "c" being a colour code.
+        # This function checks if the amount of tuples in grid line "y" is equal to the width of the window.
+        # If it is, that means it's a full line.
         gridline = self.windowObject.grid[y]
-        linerange = range(self.windowObject.startx + 1, self.windowObject.endx)
-        # Fuck you. Now I gotta form the gridline manually.
-        gridpositions = []
-        for xpos in gridline:
-            gridpositions.append(xpos[0])
-        for x in linerange:
-            if x not in gridpositions:
-                # Incomplete line. Abandon loop.
-                return
-        # If we reached here, the line is completed.
-        self.lines += 1
-        #if self.lines < 100 and self.lines % 10 == 0:
-            # 10 more lines completed. Increase level by decreasing the interval time.
-            #self.interval -= 0.100
-        self.removeline(y)
+        linerange = self.windowObject.endx - (self.windowObject.startx + 1)
+        if len(gridline) != linerange:
+            return False
+        else:
+            self.lines += 1
+            return True
 
     def removeline(self, y):
         # Clean out the line from the screen, remove it entirely from the grid,
@@ -164,6 +159,7 @@ class Game:
         # and only then allow the block to rotate.
         # This is gonna work by examining the grid which surrounds the diameter of the block's rotation
         collision = False
+        # FIXME: Actually implement the collision detection
         if collision:
             # Cannot rotate
             return
@@ -192,6 +188,7 @@ class Game:
                     if x + 2 in gridxes or x + 2 == self.windowObject.endx:
                         # Collision
                         return True
+            gridxes = []
         # If execution reached here, there were no collisions
         return False
 
@@ -210,7 +207,7 @@ class Game:
                         return True
             else:
                 # y isn't in the grid. Check wall collision.
-                if y + 1 == self.windowObject.endy:
+                if ypo == self.windowObject.endy:
                     # Collision
                     return True
         # No collisions detected
