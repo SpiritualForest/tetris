@@ -41,7 +41,7 @@ class Game:
             return True
 
     def spawnBlock(self):
-        b = self.blocks[random.randint(4, 5)]
+        b = self.blocks[random.randint(0, 6)]
         return b
 
     def handleInput(self, r):
@@ -50,7 +50,7 @@ class Game:
             key = self.windowObject.window.getch()
             if key in (curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_DOWN):
                 # Movement
-                self.movementOrigin = O_GAME # For testing.
+                self.movementOrigin = O_PLAYER
                 return (self.move, key)
             elif key == curses.KEY_UP:
                 # Rotation

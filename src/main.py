@@ -54,6 +54,11 @@ def main():
             windowObject.draw(gameObject.blockObj.coordinates, gameObject.blockObj.colour)
             r, o, e = select.select([sys.stdin], [], [], 0.01)
             mwp = gameObject.handleInput(r) # method with params
+            currenttime = int(time.time())
+            if currenttime == interval:
+                gameObject.movementOrigin = game.O_GAME
+                gameObject.move(curses.KEY_DOWN)
+                interval = currenttime + 1
             if mwp is None:
                 # No command found
                 continue
