@@ -21,7 +21,8 @@ O_GAME = "game"
 class Game:
     # Basically a wrapper class for everything else
     def __init__(self, stdscr):
-        self.windowObject = window.Window(stdscr)
+        self.maxyx = stdscr.getmaxyx()
+        self.createWindows(stdscr)
         self.gamerunning = False
         self.pause = False
         self.blockObj = None
@@ -31,6 +32,19 @@ class Game:
         self.movementOrigin = O_GAME
         self.blocks = (block.I, block.O, block.J, block.L, block.S, block.T, block.Z)
     
+    def createWindows(self, stdscr):
+        # Creates the game and new block windows. This is ugly.
+        # First the game window
+        height = 25
+        width = 28
+        maxy, maxx = self.maxyx
+        self.windowObject = window.GameWindow(height, width, maxy, maxx)
+        # Now the new block window
+        beginx = self.windowObject.beginx
+        beginy = self.windowObject.beginy
+        nbx = beginx + block.getCenter(10, 0, width)
+        self.statsWindow = window.Window(4, 10, beginy - 4, nbx)
+
     def setBlock(self, blockObject):
         self.blockObj = blockObject
     
@@ -72,6 +86,7 @@ class Game:
         # direction is actually a keystroke (curses.KEY_LEFT/RIGHT/DOWN)
         if not self.blockObj:
             # Tried to perform move() on a non existing object
+            debug.debug("Tried to perform move() on a non existing object")
             return
         if direction == curses.KEY_LEFT:
             # Left
@@ -158,14 +173,20 @@ class Game:
         # Here we perform a collision check first,
         # and only then allow the block to rotate.
         # This is gonna work by examining the grid which surrounds the diameter of the block's rotation
-        collision = False
-        # FIXME: Actually implement the collision detection
-        if collision:
-            # Cannot rotate
-            return
-        else:
-            self.blockObj.rotate()
-            self.windowObject.clearCoordinates(self.blockObj.oldcoordinates)
+        nextrotation = self.blockObj.currentrotation
+        nrc = self.blockObj.rotationcoordinates[nextrotation] # next rotation coordinates
+        for y in nrc:
+            try:
+                gridline = self.windowObject.grid[y]
+            except KeyError:
+                gridline = []
+            for xtuple in gridline:
+                if xtuple[0] in nrc[y]:
+                    # This position exists on the grid. It's impossible to rotate into it.
+                    debug.debug("Rotation collision detected: (%s, %s)" % (y, xtuple[0]))
+                    return
+        self.blockObj.rotate()
+        self.windowObject.clearCoordinates(self.blockObj.oldcoordinates)
 
     def isxCollision(self, direction):
         # only checks x values

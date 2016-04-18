@@ -2,64 +2,24 @@
 import debug
 import curses
 
-# Window border characters - found these at https://en.wikipedia.org/wiki/Box-drawing_character
-WB_UL = "┌" # Upper left
-WB_BL = "└" # Bottom left
-WB_UR = "┐" # Upper right
-WB_BR = "┘" # Bottom right
-WB_WALL_V = "│" # "Window Border Wall Vertical" - y
-WB_WALL_H = "─" # "Window Border Wall Horizontal" - x
-
 class Window:
-    def __init__(self, stdscr, yposition=0, xposition=6, sizey=25, sizex=27):
-        # By default we create a game window. However, there could be other types of windows as well.
-        self.window = stdscr # this is stdscr
-        self.stdscrmaxy, self.stdscrmaxx = self.window.getmaxyx()
-        # Configurable size?
-        self.sizey = sizey
-        self.sizex = sizex
-        self.initWindow(yposition, xposition)
-        # The grid will be a dictionary of "y: [(x, c), (x, c), (x, c), (x, c), (x, c), ...]" positions. c stands for colour.
-        self.grid = {}
+    def __init__(self, height, width, beginy, beginx):
+        self.height = height
+        self.width = width
+        self.beginy = beginy
+        self.beginx = beginx
+        self.initWindow()
 
-    def initWindow(self, yposition, xposition):
+    def initWindow(self):
         # Initializes the window
-        self.starty = int((self.stdscrmaxy / 2) - (self.sizey / 2) - yposition)
-        self.startx = int((self.stdscrmaxx / 2) - (self.sizex / 2) - xposition)
-        self.endy = self.starty + self.sizey
-        self.endx = self.startx + self.sizex
+        self.window = curses.newwin(self.height, self.width, self.beginy, self.beginx)
+        self.starty = self.startx = 0
+        self.endy = self.height - 1
+        self.endx = self.width - 1
         self.rangey = (self.starty, self.endy)
         self.rangex = (self.startx, self.endx)
-        self.drawWinBorder()
-
-    def reposition(self, y, x):
-        # Resets the window's startx and starty,
-        # and repositions the window according to the size.
-        self.startx = x
-        self.starty = y
-        self.endx = x + self.sizex
-        self.endy = y + self.sizey
-        # TODO: rewrite grid coordinates here. Otherwise display gets fucked when this method is called.
-
-    def drawWinBorder(self):
-        # Draws the window's borders
-        y = self.starty
-        x = self.startx
-        endy = self.endy
-        endx = self.endx        
-        # Draw the corners
-        self.window.addstr(y, x, WB_UL)
-        self.window.addstr(endy, x, WB_BL)
-        self.window.addstr(y, endx, WB_UR)
-        self.window.addstr(endy, endx, WB_BR)
-        # Now the vertical walls
-        for posy in range(y + 1, endy):
-            self.window.addstr(posy, x, WB_WALL_V)
-            self.window.addstr(posy, endx, WB_WALL_V)
-        # Now draw the horizontal walls
-        for posx in range(x + 1, endx):
-            self.window.addstr(y, posx, WB_WALL_H)
-            self.window.addstr(endy, posx, WB_WALL_H)
+        self.window.border()
+        self.window.refresh()
 
     def draw(self, coordinates, colour):
         # Draws at the coordinates with colour.
@@ -67,6 +27,18 @@ class Window:
             for x in coordinates[y]:
                 self.window.addstr(y, x, "#", curses.color_pair(colour))
         self.window.refresh()
+
+    def __getattr__(self, attr):
+        return getattr(self.window, attr)
+
+class GameWindow(Window):
+    def __init__(self, height, width, maxy, maxx):
+        self.beginy = int((maxy / 2) - (height / 2))
+        self.beginx = int((maxx / 2) - (width / 2) - 6)
+        # The grid will be a dictionary of "y: [(x, c), (x, c), (x, c), (x, c), (x, c), ...]" positions. c stands for colour.
+        self.grid = {}
+        self.window = Window(height, width, self.beginy, self.beginx)
+        self.window.keypad(True)
 
     def clearPosition(self, position):
         y, x = position
@@ -79,11 +51,16 @@ class Window:
                 self.clearPosition((y, x))
 
     def redraw(self):
-        # redraws the entire screen according to grid positions.
-        self.window.clear()
-        self.drawWinBorder()
+        # redraws the window according to grid positions.
+        self.window.erase()
+        self.window.border()
         grid = self.grid
         for y in grid:
             for xpos in grid[y]:
                 x, colour = xpos
                 self.window.addstr(y, x, "#", curses.color_pair(colour))
+
+class StatsWindow(Window):
+    def __init__(self, height, width, maxy, maxx):
+        pass
+

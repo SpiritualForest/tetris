@@ -22,6 +22,7 @@ def initpairs():
 def initCurses():
     stdscr = curses.initscr()
     stdscr.keypad(True)
+    stdscr.immedok(True)
     curses.noecho()
     curses.cbreak()
     curses.start_color()
@@ -40,6 +41,8 @@ def main():
     # Create a game object and start the game
     gameObject = game.Game(stdscr)
     gameObject.gamerunning = 1
+    blockObj = None
+    nextblock = None
     interval = int(time.time()) + 1
     windowObject = gameObject.windowObject
     while gameObject.gamerunning:
@@ -48,10 +51,19 @@ def main():
                 # Top line reached. Cannot spawn object. Game must end.
                 gameObject.gamerunning = 0
                 return
-            blockObj = gameObject.spawnBlock()
+            if nextblock:
+                blockObj = nextblock
+                nextblock = None
+            else:
+                blockObj = gameObject.spawnBlock()
             gameObject.setBlock(blockObj(windowObject.rangey, windowObject.rangex))
+            windowObject.redraw()
         else:
             windowObject.draw(gameObject.blockObj.coordinates, gameObject.blockObj.colour)
+            if not nextblock:
+                nextblock = gameObject.spawnBlock()
+                #windowObject.window.addstr(windowObject.endy + 1, windowObject.beginx, "Fuck")
+
             r, o, e = select.select([sys.stdin], [], [], 0.01)
             mwp = gameObject.handleInput(r) # method with params
             currenttime = int(time.time())
