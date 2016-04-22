@@ -10,7 +10,6 @@ import debug
 # TODO: implement levels and AI. Improve display. Add stats.
 # TODO: allow game.dropblock() to be triggered when a user repeatedly presses down key on a collision.
 # FIXME: IMPROVE READABILITIY!!!
-# FIXME: implement collision check on rotations.
 # FIXME: interval reduction on 10 lines causes the game to freeze
 
 # Movement origins - we need this to determine whether the player caused the move,
@@ -29,6 +28,7 @@ class Game:
         self.nextblock = None # used for showing the player what the next block is
         self.lines = 0
         self.interval = 1 # time that has to pass between each automatic downwards movement of a block
+        self.downpress = 0 # used to enable the player to force-drop a block.
         self.movementOrigin = O_GAME
         self.blocks = (block.I, block.O, block.J, block.L, block.S, block.T, block.Z)
     
@@ -43,7 +43,7 @@ class Game:
         beginx = self.windowObject.beginx
         beginy = self.windowObject.beginy
         nbx = beginx + block.getCenter(10, 0, width)
-        self.statsWindow = window.Window(4, 10, beginy - 4, nbx)
+        self.nbw = window.NBWindow(self.windowObject)
 
     def setBlock(self, blockObject):
         self.blockObj = blockObject
@@ -142,7 +142,9 @@ class Game:
             # Check for line completion
             if self.isCompleted(y):
                 self.removeline(y)
-        # "Unscope" the block object
+                if self.lines % 10 == 0:
+                    # Another 10 lines. Decrease the interval by 100 milliseconds
+                    self.interval = self.interval - 0.100
         self.setBlock(None)
     
     def isCompleted(self, y):

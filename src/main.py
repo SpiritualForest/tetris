@@ -19,10 +19,14 @@ def initpairs():
     for i, colour in enumerate(colours):
         curses.init_pair(i + 1, colour, colour)
 
+def gameSleep(n):
+    time.sleep(n)
+    return True
+
 def initCurses():
     stdscr = curses.initscr()
     stdscr.keypad(True)
-    stdscr.immedok(True)
+    stdscr.immedok(True) # This setting causes an immediate refresh() to be called on each change
     curses.noecho()
     curses.cbreak()
     curses.start_color()
@@ -41,48 +45,34 @@ def main():
     # Create a game object and start the game
     gameObject = game.Game(stdscr)
     gameObject.gamerunning = 1
-    blockObj = None
-    nextblock = None
-    interval = int(time.time()) + 1
-    windowObject = gameObject.windowObject
+    # Interval testing here.
+    interval = time.time() + gameObject.interval
     while gameObject.gamerunning:
-        if not gameObject.hasblock():
-            if windowObject.starty + 1 in windowObject.grid:
-                # Top line reached. Cannot spawn object. Game must end.
-                gameObject.gamerunning = 0
-                return
-            if nextblock:
-                blockObj = nextblock
-                nextblock = None
-            else:
-                blockObj = gameObject.spawnBlock()
-            gameObject.setBlock(blockObj(windowObject.rangey, windowObject.rangex))
-            windowObject.redraw()
+        if not gameObject.blockObj:
+            # Spawn a block.
+            b = gameObject.spawnBlock()
+            blockObj = b(gameObject.windowObject.window.rangey, gameObject.windowObject.window.rangex)
+            gameObject.setBlock(blockObj)
         else:
-            windowObject.draw(gameObject.blockObj.coordinates, gameObject.blockObj.colour)
-            if not nextblock:
-                nextblock = gameObject.spawnBlock()
-                #windowObject.window.addstr(windowObject.endy + 1, windowObject.beginx, "Fuck")
-
-            r, o, e = select.select([sys.stdin], [], [], 0.01)
-            mwp = gameObject.handleInput(r) # method with params
-            currenttime = int(time.time())
-            if currenttime == interval:
+            gameObject.windowObject.draw(blockObj.coordinates, blockObj.colour)
+            if time.time() >= interval:
                 gameObject.movementOrigin = game.O_GAME
                 gameObject.move(curses.KEY_DOWN)
-                interval = currenttime + 1
-            if mwp is None:
-                # No command found
-                continue
-            if len(mwp) > 1:
-                method, params = mwp
-                method(params)
-            else:
+                interval = time.time() + gameObject.interval
+            r, o, e = select.select([sys.stdin], [], [], 0.01)
+            mwp = gameObject.handleInput(r)
+            if mwp:
                 method = mwp[0]
-                method()
-        
-    curses.endwin()
+                try:
+                    params = mwp[1]
+                except IndexError:
+                    params = None
+                if not params:
+                    method()
+                else:
+                    method(params)
 
 if __name__ == "__main__":
     main()
     debug.end()
+    curses.endwin()

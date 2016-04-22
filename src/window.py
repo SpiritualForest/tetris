@@ -60,7 +60,13 @@ class GameWindow(Window):
                 x, colour = xpos
                 self.window.addstr(y, x, "#", curses.color_pair(colour))
 
-class StatsWindow(Window):
-    def __init__(self, height, width, maxy, maxx):
-        pass
+class NBWindow(Window):
+    def __init__(self, gamewindow):
+        # Next Block Window (displays the next block)
+        # We position it according to the position of the main game window
+        self.width = 14
+        self.height = 4
+        self.beginx = int((gamewindow.beginx + gamewindow.window.width) - (self.width * 2) + 7)
+        self.beginy = gamewindow.beginy - self.height
+        self.window = Window(self.height, self.width, self.beginy, self.beginx)
 
