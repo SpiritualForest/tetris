@@ -66,7 +66,7 @@ class NBWindow(Window):
         # We position it according to the position of the main game window
         self.width = 14
         self.height = 4
-        self.beginx = int((gamewindow.beginx + gamewindow.window.width) - (self.width * 2) + 7)
-        self.beginy = gamewindow.beginy - self.height
+        self.beginx = gamewindow.beginx - self.width
+        self.beginy = gamewindow.beginy + self.height
         self.window = Window(self.height, self.width, self.beginy, self.beginx)
 

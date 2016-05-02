@@ -9,8 +9,6 @@ import debug
 
 # TODO: implement levels and AI. Improve display. Add stats.
 # TODO: allow game.dropblock() to be triggered when a user repeatedly presses down key on a collision.
-# FIXME: IMPROVE READABILITIY!!!
-# FIXME: interval reduction on 10 lines causes the game to freeze
 
 # Movement origins - we need this to determine whether the player caused the move,
 # or the game moved the blocks downwards automatically.
@@ -28,6 +26,7 @@ class Game:
         self.nextblock = None # used for showing the player what the next block is
         self.lines = 0
         self.interval = 1 # time that has to pass between each automatic downwards movement of a block
+        self.nextautomove = time.time() + self.interval
         self.downpress = 0 # used to enable the player to force-drop a block.
         self.movementOrigin = O_GAME
         self.blocks = (block.I, block.O, block.J, block.L, block.S, block.T, block.Z)
@@ -44,6 +43,8 @@ class Game:
         beginy = self.windowObject.beginy
         nbx = beginx + block.getCenter(10, 0, width)
         self.nbw = window.NBWindow(self.windowObject)
+        self.nbw.window.clear()
+        self.nbw.window.refresh()
 
     def setBlock(self, blockObject):
         self.blockObj = blockObject
@@ -57,6 +58,23 @@ class Game:
     def spawnBlock(self):
         b = self.blocks[random.randint(0, 6)]
         return b
+
+    def canmove(self):
+        # If the block "can move now" because the next automatic movement time had elapsed, return True.
+        # If it can't yet, return False.
+        if time.time() >= self.nextautomove:
+            return True
+        else:
+            return False
+
+    def automove(self, forced=False):
+        # Checks whether the block can move downwards now.
+        # If it can, moves it down and resets the next automatic movement time.
+        if self.hasblock():
+            if forced or self.canmove():
+                self.movementOrigin = O_GAME
+                self.move(curses.KEY_DOWN)
+                self.nextautomove = time.time() + self.interval
 
     def handleInput(self, r):
         # FIXME: Totally reimplement this method
@@ -111,7 +129,10 @@ class Game:
                 # Collision. What is the movement's origin?
                 if self.movementOrigin == O_PLAYER:
                     # This is from the player. We don't need to do anything.
-                    pass
+                    self.downpress += 1
+                    if self.downpress == 2:
+                        self.downpress = 0
+                        self.automove(True)
                 else:
                     # Interval passed. Block can no longer be moved. Drop it.
                     self.dropblock()

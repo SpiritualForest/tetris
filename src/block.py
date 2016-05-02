@@ -32,7 +32,7 @@ class Block:
             # rmap is a hash table
             rcmap = self.map(self.width, rmap)
             self.rotationcoordinates.append(rcmap)
-
+        # Free up some memory here, we don't need these anymore.
         del self.rotations
         del self.cmap
 

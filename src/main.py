@@ -1,7 +1,6 @@
 # System-wide imports
 import curses
 import select
-import time
 import sys
 # Local (personal) imports
 import game
@@ -18,10 +17,6 @@ def initpairs():
                 curses.COLOR_CYAN, curses.COLOR_WHITE)
     for i, colour in enumerate(colours):
         curses.init_pair(i + 1, colour, colour)
-
-def gameSleep(n):
-    time.sleep(n)
-    return True
 
 def initCurses():
     stdscr = curses.initscr()
@@ -45,32 +40,28 @@ def main():
     # Create a game object and start the game
     gameObject = game.Game(stdscr)
     gameObject.gamerunning = 1
-    # Interval testing here.
-    interval = time.time() + gameObject.interval
     while gameObject.gamerunning:
         if not gameObject.blockObj:
             # Spawn a block.
             b = gameObject.spawnBlock()
-            blockObj = b(gameObject.windowObject.window.rangey, gameObject.windowObject.window.rangex)
+            gw = gameObject.windowObject.window # Game window
+            blockObj = b(gw.rangey, gw.rangex)
+            nbobj = b(gameObject.nbw.window.rangey, gameObject.nbw.window.rangex)
             gameObject.setBlock(blockObj)
+            gameObject.nbw.window.clear()
+            gameObject.nbw.window.draw(nbobj.coordinates, nbobj.colour)
         else:
-            gameObject.windowObject.draw(blockObj.coordinates, blockObj.colour)
-            if time.time() >= interval:
-                gameObject.movementOrigin = game.O_GAME
-                gameObject.move(curses.KEY_DOWN)
-                interval = time.time() + gameObject.interval
+            gameObject.windowObject.window.draw(blockObj.coordinates, blockObj.colour)
+            gameObject.automove()
             r, o, e = select.select([sys.stdin], [], [], 0.01)
             mwp = gameObject.handleInput(r)
             if mwp:
                 method = mwp[0]
                 try:
                     params = mwp[1]
-                except IndexError:
-                    params = None
-                if not params:
-                    method()
-                else:
                     method(params)
+                except IndexError:
+                    method()
 
 if __name__ == "__main__":
     main()
