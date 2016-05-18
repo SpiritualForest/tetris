@@ -133,10 +133,15 @@ class Game:
                     if self.downpress == 2:
                         self.downpress = 0
                         self.automove(True)
+                        # We return here because automove()
+                        # might cause dropblock() to trigger,
+                        # which would set the block object to None.
+                        return
                 else:
                     # Interval passed. Block can no longer be moved. Drop it.
                     self.dropblock()
                     return
+        # Clear the object's previous coordinates from the screen.
         self.windowObject.clearCoordinates(self.blockObj.oldcoordinates)
 
     def dropblock(self):
