@@ -40,13 +40,19 @@ def main():
     # Create a game object and start the game
     gameObject = game.Game(stdscr)
     gameObject.gamerunning = 1
+    nextblock = gameObject.spawnBlock()
     while gameObject.gamerunning:
         if not gameObject.blockObj:
+            if 1 in gameObject.windowObject.grid:
+                # Top reached. Game over.
+                gameObject.gamerunning = False
+                return
             # Spawn a block.
-            b = gameObject.spawnBlock()
+            b = nextblock
+            nextblock = gameObject.spawnBlock()
             gw = gameObject.windowObject.window # Game window
             blockObj = b(gw.rangey, gw.rangex)
-            nbobj = b(gameObject.nbw.window.rangey, gameObject.nbw.window.rangex)
+            nbobj = nextblock(gameObject.nbw.window.rangey, gameObject.nbw.window.rangex)
             gameObject.setBlock(blockObj)
             gameObject.nbw.window.clear()
             gameObject.nbw.window.draw(nbobj.coordinates, nbobj.colour)
