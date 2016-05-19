@@ -36,6 +36,7 @@ class Game:
         self.downpress = 0 # used to enable the player to force-drop a block.
         self.movementOrigin = O_GAME
         self.humanplayer = human  # True by default
+        self.aiObject = None
         self.blocks = (block.I, block.O, block.J, block.L, block.S, block.T, block.Z)
         self.nextblock = self.spawnBlock()
     
@@ -119,7 +120,7 @@ class Game:
             key = self.windowObject.window.getch()
         else:
             # Grab input from AI
-            key = self.aiObject.getch()            
+            key = self.aiObject.getCommand()            
         # Actual functionality begins here.
         if key in (curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_DOWN):
             # Movement

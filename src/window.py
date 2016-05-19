@@ -73,6 +73,7 @@ class NBWindow(Window):
         self.window = Window(self.height, self.width, self.beginy, self.beginx)
 
 class MenuWindow(Window):
+    # TODO: Make this more modular. Allow for dynamic specification of options.
     def __init__(self, maxyx):
         maxy, maxx = maxyx
         self.width = 15
@@ -102,7 +103,7 @@ class MenuWindow(Window):
 
     def showchoice(self):
         # Highlights the current choice
-        self.window.addstr(self.choice, 1, self.choices[self.choice], curses.A_REVERSE)
+        self.window.addstr(self.choice, 1, self.choices[self.choice], curses.A_BOLD | curses.color_pair(9))
 
     def handleInput(self):
         r, w, e = select.select([sys.stdin], [], [], 0.1)

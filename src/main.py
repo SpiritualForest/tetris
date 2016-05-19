@@ -6,8 +6,8 @@ import sys
 import window
 import game
 import debug
+import ai
 
-# TODO: Completely refactor the main loop, and clean up code.
 # FIXME: Pause the automatic drop when the player presses down, restart it when the player doesn't move the object downwards.
 
 # init colour pairs
@@ -18,6 +18,8 @@ def initpairs():
                 curses.COLOR_CYAN, curses.COLOR_WHITE)
     for i, colour in enumerate(colours):
         curses.init_pair(i + 1, colour, colour)
+    # Now the menu colour pair.
+    curses.init_pair(9, curses.COLOR_CYAN, curses.COLOR_BLACK)
 
 def initCurses():
     stdscr = curses.initscr()
@@ -38,20 +40,19 @@ def initCurses():
 def menu(maxyx):
     # Displays the menu of game choices
     win = window.MenuWindow(maxyx)
-    choice = win.handleInput()
-    while not choice:
+    while not win.handleInput():
         # if handleInput() returned False, we continue to loop,
-        choice = win.handleInput()
+        continue
     win.window.clear()
     return win.choice 
 
 def main():
-    # Initialize curses and get the window object
+    # Initialize curses
     stdscr = initCurses()
     initpairs()
-    gameinprogress = False
+    gameinprogress = False # There can be more than one game running simultaneously.
     gObjects = {} # Game objects
-    gamedoneObj = None # Used for removing a game from the gObjects dict
+    finishedGame = None # Used for removing a game from the gObjects dict
     while 1:
         # If there is no game in progress, display the options menu.
         # Otherwise, the game runs.
@@ -65,7 +66,11 @@ def main():
                 gameinprogress = True
             elif gametype == game.GT_AI:
                 # Watch AI.
-                pass
+                gameObject = game.Game(stdscr, False) # True for human, False for AI player
+                gameObject.gamerunning = 1
+                gObjects[gameObject] = True
+                gameinprogress = True
+                gameObject.aiObject = ai.AI(gameObject.windowObject)
             elif gametype == game.GT_AIVSAI:
                 # AI vs AI.
                 pass
@@ -73,7 +78,8 @@ def main():
                 # Human vs AI.
                 pass
             else:
-                # Fifth option. Quit by exiting the loop.
+                # Fifth option. Clear the screen and quit by exiting the loop.
+                stdscr.clear()
                 break
         else:
             # There is a game (or games) in progress.
@@ -81,12 +87,13 @@ def main():
                 if gameObj.gamerunning:
                     gameObj.run()
                 else:
-                    gamedoneObj = gameObj
-            if gamedoneObj:
-                gObjects.pop(gamedoneObj)
-                gamedoneObj = None
+                    finishedGame = gameObj
+            if finishedGame:
+                gObjects.pop(finishedGame)
+                finishedGame = None
             if not gObjects:
                 # All games are done. Display the menu again.
+                stdscr.clear()
                 gameinprogress = False
 
 if __name__ == "__main__":
