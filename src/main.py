@@ -3,6 +3,7 @@ import curses
 import select
 import sys
 # Local (personal) imports
+import window
 import game
 import debug
 
@@ -24,6 +25,7 @@ def initCurses():
     stdscr.immedok(True) # This setting causes an immediate refresh() to be called on each change
     curses.noecho()
     curses.cbreak()
+    curses.nonl()
     curses.start_color()
     try:
         # Make the cursor invisible. Continue anyway if impossible.
@@ -33,43 +35,42 @@ def initCurses():
     # Return the stdscr window object
     return stdscr
 
+def menu(maxyx):
+    # Displays the menu of game choices
+    win = window.MenuWindow(maxyx)
+    choice = win.handleInput()
+    while not choice:
+        # if handleInput() returned False, we continue to loop,
+        choice = win.handleInput()
+        debug.debug("The value of choice is: %s" % choice)
+    win.window.clear()
+    return win.choice    
+
 def main():
     # Initialize curses and get the window object
     stdscr = initCurses()
     initpairs()
-    # Create a game object and start the game
-    gameObject = game.Game(stdscr)
-    gameObject.gamerunning = 1
-    nextblock = gameObject.spawnBlock()
-    while gameObject.gamerunning:
-        if not gameObject.blockObj:
-            if 1 in gameObject.windowObject.grid:
-                # Top reached. Game over.
-                gameObject.gamerunning = False
-                return
-            # Spawn a block.
-            b = nextblock
-            nextblock = gameObject.spawnBlock()
-            gw = gameObject.windowObject.window # Game window
-            blockObj = b(gw.rangey, gw.rangex)
-            nbobj = nextblock(gameObject.nbw.window.rangey, gameObject.nbw.window.rangex)
-            gameObject.setBlock(blockObj)
-            gameObject.nbw.window.clear()
-            gameObject.nbw.window.draw(nbobj.coordinates, nbobj.colour)
-        else:
-            gameObject.windowObject.window.draw(blockObj.coordinates, blockObj.colour)
-            gameObject.automove()
-            r, o, e = select.select([sys.stdin], [], [], 0.01)
-            mwp = gameObject.handleInput(r)
-            if mwp:
-                method = mwp[0]
-                try:
-                    params = mwp[1]
-                    method(params)
-                except IndexError:
-                    method()
+    # Display the menu.
+    gametype = menu(stdscr.getmaxyx())
+    if gametype == game.GT_SINGLE:
+        # Single player game
+        gameObject = game.Game(stdscr)
+        gameObject.gamerunning = 1
+        while gameObject.gamerunning:
+            gameObject.run()
+    elif gametype == game.GT_AI:
+        # Watch AI.
+        pass
+    elif gametype == game.GT_AIVSAI:
+        # AI vs AI.
+        pass
+    elif gametype == game.GT_HVSAI:
+        # Human vs AI.
+        pass
+    else:
+        # Fifth option. Quit.
+        debug.end()
+        curses.endwin()
 
 if __name__ == "__main__":
     main()
-    debug.end()
-    curses.endwin()

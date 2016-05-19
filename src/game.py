@@ -2,6 +2,8 @@
 import random
 import curses
 import time
+import select
+import sys
 # Local (personal) imports
 import block
 import window
@@ -14,22 +16,28 @@ import debug
 # or the game moved the blocks downwards automatically.
 O_PLAYER = "player" # can also be AI
 O_GAME = "game"
+# Game type constants
+GT_SINGLE = 1
+GT_AI = 2
+GT_AIVSAI = 3
+GT_HVSAI = 4
 
 class Game:
     # Basically a wrapper class for everything else
-    def __init__(self, stdscr):
+    def __init__(self, stdscr, human=True):
         self.maxyx = stdscr.getmaxyx()
         self.createWindows(stdscr)
         self.gamerunning = False
         self.pause = False
         self.blockObj = None
-        self.nextblock = None # used for showing the player what the next block is
         self.lines = 0
         self.interval = 1 # time that has to pass between each automatic downwards movement of a block
         self.nextautomove = time.time() + self.interval
         self.downpress = 0 # used to enable the player to force-drop a block.
         self.movementOrigin = O_GAME
+        self.humanplayer = human  # True by default
         self.blocks = (block.I, block.O, block.J, block.L, block.S, block.T, block.Z)
+        self.nextblock = self.spawnBlock()
     
     def createWindows(self, stdscr):
         # Creates the game and new block windows. This is ugly.
@@ -45,6 +53,30 @@ class Game:
         self.nbw = window.NBWindow(self.windowObject)
         self.nbw.window.clear()
         self.nbw.window.refresh()
+    
+    def run(self):
+        # This method ties everything together.
+        # It will enable us to have multiple game instances as well.
+        if not self.hasblock():
+            if 1 in self.windowObject.grid:
+                # Top line reached. Game ends.
+                self.gamerunning = False
+                return
+            b = self.nextblock
+            # Next block formation and displaying
+            self.nextblock = self.spawnBlock()
+            self.nbw.window.clear()
+            nbobj = self.nextblock(self.nbw.window.rangey, self.nbw.window.rangex)
+            self.nbw.window.draw(nbobj.coordinates, nbobj.colour)
+            # Current block handling
+            blockObject = b(self.windowObject.window.rangey, self.windowObject.window.rangex)
+            self.setBlock(blockObject)
+        else:
+            # Draw the block on the window, automatically move, take input
+            self.windowObject.draw(self.blockObj.coordinates, self.blockObj.colour)
+            self.automove()
+            self.handleInput()
+
 
     def setBlock(self, blockObject):
         self.blockObj = blockObject
@@ -76,29 +108,38 @@ class Game:
                 self.move(curses.KEY_DOWN)
                 self.nextautomove = time.time() + self.interval
 
-    def handleInput(self, r):
-        # FIXME: Totally reimplement this method
-        if r:
+    def handleInput(self):
+        # This method handles input.
+        # It can take input either from a human player, or an AI.
+        key = None
+        if self.humanplayer:
+            r, w, e = select.select([sys.stdin], [], [], 0.01)
+            if not r:
+                return
             key = self.windowObject.window.getch()
-            if key in (curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_DOWN):
-                # Movement
-                self.movementOrigin = O_PLAYER
-                return (self.move, key)
-            elif key == curses.KEY_UP:
-                # Rotation
-                return (self.rotate,)
-            elif key in (ord("p"), ord("P")):
-                # Pause or unpause the game
-                if not self.pause:
-                    self.pause = True
-                else:
-                    self.pause = False
-            elif key in (ord("q"), ord("Q")):
-                # Quit the game
-                self.gamerunning = False
+        else:
+            # Grab input from AI
+            key = self.aiObject.getch()            
+        # Actual functionality begins here.
+        if key in (curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_DOWN):
+            # Movement
+            self.movementOrigin = O_PLAYER
+            self.move(key)
+        elif key == curses.KEY_UP:
+            # Rotation
+            self.rotate()
+        elif key in (ord("p"), ord("P")):
+            # Pause or unpause the game
+            if not self.pause:
+                self.pause = True
             else:
-                # Do nothing
-                pass
+                self.pause = False
+        elif key in (ord("q"), ord("Q")):
+            # Quit the game
+            self.gamerunning = False
+        else:
+            # Do nothing
+            pass
 
     def move(self, direction):
         # direction is actually a keystroke (curses.KEY_LEFT/RIGHT/DOWN)
@@ -170,7 +211,7 @@ class Game:
                 self.removeline(y)
                 if self.lines % 10 == 0:
                     # Another 10 lines. Decrease the interval by 100 milliseconds
-                    self.interval = self.interval - 0.100
+                    self.interval = self.interval - 0.250
         self.setBlock(None)
     
     def isCompleted(self, y):

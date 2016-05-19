@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import debug
 import curses
+import sys
+import select
 
 class Window:
     def __init__(self, height, width, beginy, beginx):
@@ -69,4 +71,57 @@ class NBWindow(Window):
         self.beginx = gamewindow.beginx - self.width
         self.beginy = gamewindow.beginy + self.height
         self.window = Window(self.height, self.width, self.beginy, self.beginx)
+
+class MenuWindow(Window):
+    def __init__(self, maxyx):
+        maxy, maxx = maxyx
+        self.width = 15
+        self.height = 7 # We have four options
+        self.beginy = int((maxy / 2) - (self.height / 2))
+        self.beginx = int((maxx / 2) - (self.width / 2))
+        self.window = Window(self.height, self.width, self.beginy, self.beginx)
+        self.window.keypad(True)
+        self.choices = {
+                1: "Single player",
+                2: "Watch AI",
+                3: "AI vs AI",
+                4: "Human vs AI",
+                5: "Quit"
+                }
+        self.choice = 1
+        # Display the options
+        self.displaymenu()
+
+    def displaymenu(self):
+        self.window.clear()
+        self.window.border()
+        for choice in self.choices:
+            self.window.addstr(choice, 1, self.choices[choice])
+        self.showchoice()
+        self.window.refresh()
+
+    def showchoice(self):
+        # Highlights the current choice
+        self.window.addstr(self.choice, 1, self.choices[self.choice], curses.A_REVERSE)
+
+    def handleInput(self):
+        r, w, e = select.select([sys.stdin], [], [], 0.1)
+        if r:
+            key = self.window.getch()
+            if key == curses.KEY_DOWN:
+                if self.choice < max(self.choices):
+                    self.choice += 1
+                else:
+                    self.choice = min(self.choices)
+                self.displaymenu()
+            elif key == curses.KEY_UP:
+                if self.choice > 1:
+                    self.choice -= 1
+                else:
+                    self.choice = max(self.choices)
+                self.displaymenu()
+            elif key == 13:
+                # Enter key, select choice.
+                debug.debug("The choice is: %s" % self.choice)
+                return True
 
