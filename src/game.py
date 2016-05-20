@@ -24,7 +24,8 @@ GT_HVSAI = 4
 
 class Game:
     # Basically a wrapper class for everything else
-    def __init__(self, stdscr, human=True):
+    def __init__(self, stdscr, **kwargs):
+        # We only use kwargs to determine if it's a human player or not.
         self.maxyx = stdscr.getmaxyx()
         self.createWindows(stdscr)
         self.gamerunning = False
@@ -35,7 +36,8 @@ class Game:
         self.nextautomove = time.time() + self.interval
         self.downpress = 0 # used to enable the player to force-drop a block.
         self.movementOrigin = O_GAME
-        self.humanplayer = human  # True by default
+        self.moved = False # used to disable the automove interval on down presses
+        self.humanplayer = kwargs["human"]
         self.aiObject = None
         self.blocks = (block.I, block.O, block.J, block.L, block.S, block.T, block.Z)
         self.nextblock = self.spawnBlock()
@@ -75,9 +77,17 @@ class Game:
         else:
             # Draw the block on the window, automatically move, take input
             self.windowObject.draw(self.blockObj.coordinates, self.blockObj.colour)
-            self.automove()
+            if self.pause:
+                # We still need to take input when the game paused, otherwise we can't unpause.
+                self.handleInput()
+                return
+            # Game isn't paused.
             self.handleInput()
-
+            if not self.moved:
+                self.automove()
+            else:
+                self.moved = False
+                return
 
     def setBlock(self, blockObject):
         self.blockObj = blockObject
@@ -122,11 +132,11 @@ class Game:
             # Grab input from AI
             key = self.aiObject.getCommand()            
         # Actual functionality begins here.
-        if key in (curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_DOWN):
+        if key in (curses.KEY_RIGHT, curses.KEY_LEFT, curses.KEY_DOWN) and not self.pause:
             # Movement
             self.movementOrigin = O_PLAYER
             self.move(key)
-        elif key == curses.KEY_UP:
+        elif key == curses.KEY_UP and not self.pause:
             # Rotation
             self.rotate()
         elif key in (ord("p"), ord("P")):
@@ -167,6 +177,10 @@ class Game:
             collision = self.isyCollision()
             if not collision:
                 self.blockObj.move(block.D_DOWN)
+                if self.movementOrigin == O_PLAYER:
+                    # Player moved this, so reset the automove interval.
+                    self.nextautomove = time.time() + self.interval
+                    self.moved = True
             else:
                 # Collision. What is the movement's origin?
                 if self.movementOrigin == O_PLAYER:
@@ -208,11 +222,15 @@ class Game:
                     self.windowObject.grid[y] = newxes
                 newxes = []
             # Check for line completion
+            completed = False
             if self.isCompleted(y):
                 self.removeline(y)
+                completed = True
                 if self.lines % 10 == 0:
                     # Another 10 lines. Decrease the interval by 100 milliseconds
                     self.interval = self.interval - 0.250
+            if completed:
+                self.windowObject.redraw()
         self.setBlock(None)
     
     def isCompleted(self, y):
@@ -237,7 +255,6 @@ class Game:
             self.windowObject.grid[line] = self.windowObject.grid[line - 1]
         # Redraw the entire screen
         del self.windowObject.grid[firstline]
-        self.windowObject.redraw()
 
     def rotate(self):
         # Here we perform a collision check first,

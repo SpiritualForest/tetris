@@ -16,6 +16,9 @@ class AI:
         # We don't actually do anything with this, except get the coordinates of the block,
         # which are required for calculations.
         self.blockObj = block
+    def setNextBlock(self, block):
+        # Set the next block
+        self.nextblock = block
 
     def getCommand(self):
         # Returns the command that the AI wants to perform.
