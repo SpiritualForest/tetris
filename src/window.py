@@ -62,6 +62,16 @@ class GameWindow(Window):
                 x, colour = xpos
                 self.window.addstr(y, x, "#", curses.color_pair(colour))
 
+    def extractxes(self, grid, y):
+        # Generates a list of all the x positions in a grid[y] position
+        if y not in grid:
+            return
+        xes = []
+        for xtuple in grid[y]:
+            x = xtuple[0]
+            xes.append(x)
+        return xes
+
 class NBWindow(Window):
     def __init__(self, gamewindow):
         # Next Block Window (displays the next block)
@@ -123,6 +133,5 @@ class MenuWindow(Window):
                 self.displaymenu()
             elif key == 13:
                 # Enter key, select choice.
-                debug.debug("The choice is: %s" % self.choice)
                 return True
 

@@ -74,6 +74,9 @@ class Game:
             # Current block handling
             blockObject = b(self.windowObject.window.rangey, self.windowObject.window.rangex)
             self.setBlock(blockObject)
+            
+            #### AI TESTING HERE ####
+            self.aiObject.setBlock(blockObject)
         else:
             # Draw the block on the window, automatically move, take input
             self.windowObject.draw(self.blockObj.coordinates, self.blockObj.colour)
@@ -184,7 +187,7 @@ class Game:
             else:
                 # Collision. What is the movement's origin?
                 if self.movementOrigin == O_PLAYER:
-                    # This is from the player. We don't need to do anything.
+                    # This is from the player.
                     self.downpress += 1
                     if self.downpress == 2:
                         self.downpress = 0
@@ -195,6 +198,8 @@ class Game:
                         return
                 else:
                     # Interval passed. Block can no longer be moved. Drop it.
+                    # Call the AI's computation method for testing purpose
+                    self.aiObject.computeHeuristics()
                     self.dropblock()
                     return
         # Clear the object's previous coordinates from the screen.

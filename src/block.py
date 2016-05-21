@@ -143,7 +143,6 @@ class I(Block):
         self.width = 8
         super().__init__(rangey, rangex)
 
-
 class O(Block):
     def __init__(self, rangey, rangex):
         self.colour = C_BLUE

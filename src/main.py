@@ -1,7 +1,5 @@
 # System-wide imports
 import curses
-import select
-import sys
 # Local (personal) imports
 import window
 import game
@@ -84,6 +82,9 @@ def main():
             if gametype == game.GT_SINGLE:
                 # Single player game
                 games.extend(createGame(stdscr, game.GT_SINGLE))
+                # For AI testing purposes, we'll add an AI object to this game.
+                go = games[0]
+                go.aiObject = ai.AI(go.windowObject)
                 gameinprogress = True
             elif gametype == game.GT_AI:
                 # Watch AI.
