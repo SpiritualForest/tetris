@@ -46,7 +46,7 @@ class Game:
         # Creates the game and new block windows. This is ugly.
         # First the game window
         height = 25
-        width = 28
+        width = 22
         maxy, maxx = self.maxyx
         self.windowObject = window.GameWindow(height, width, maxy, maxx)
         # Now the new block window

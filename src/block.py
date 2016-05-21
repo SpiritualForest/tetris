@@ -125,7 +125,7 @@ def getCenter(width, start, end):
     # Gets the middle "x" between start and end according to width
     drawrange = end - start
     result = int((drawrange / 2) - (width / 2) + start)
-    return result
+    return result - 1
 
 class I(Block):
     def __init__(self, rangey, rangex):

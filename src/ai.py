@@ -35,17 +35,19 @@ class AI:
         return self.command
 
     def computeHeuristics(self):
-        # First we generate the new grid on the game's actual grid.
+        # First we generate the new grid based on the game's actual grid.
         # However, there is no permanent modification to the game's real grid.
         grid = copy.deepcopy(self.window.grid)
         self.addblock(grid)
         lines = self.checklines(grid)
         holes = self.checkholes(grid)
+        height = self.checkheight(grid)
         if lines:
             debug.debug("AI detected completed lines: %s" % lines)
         if holes:
             debug.debug("AI detected new holes: %s" % holes)
-    
+        debug.debug("Height of grid: %s" % height)
+
     def checklines(self, grid):
         # Checks how many lines will be completed on the grid
         linerange = self.window.endx - (self.window.startx + 1)
@@ -70,9 +72,27 @@ class AI:
                     x = xtuple[0]
                     exes = self.window.extractxes(grid, y+1) # "Extracted xes"
                     if x not in exes:
-                        # Hole detected.
+                        # Hole?
                         holes += 1
         return holes
+
+    def checkheight(self, grid):
+        # We check the height of the grid.
+        # All we do is get all x's from each y and sum them.
+        total = 0
+        xlist = {}
+        for y in grid:
+            xes = self.window.extractxes(grid, y)
+            # Now, all these x values are inside this y value.
+            for x in xes:
+                try:
+                    xlist[x].append(y)
+                except KeyError:
+                    xlist[x] = [y]
+        # Now we have a dictionary.
+        for x in xlist:
+            total += len(xlist[x])
+        return int(total / 2)
 
     def addblock(self, grid):
         # Adds the block to the given grid, returns the result
