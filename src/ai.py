@@ -42,13 +42,15 @@ class AI:
         lines = self.checklines(grid)
         holes = self.checkholes(grid)
         height = self.checkheight(grid)
-        # bumpiness = self.checkbumpiness(grid)
+        bumpiness = self.checkbumpiness(grid)
         # NOTE: Remember to undrop the block!
         self.game.undrop()
         if lines:
             debug.debug("AI detected completed lines: %s" % lines)
         if holes:
             debug.debug("AI detected new holes: %s" % holes)
+        if bumpiness:
+            debug.debug("AI detected bumpiness level: %s" % bumpiness)
         debug.debug("Height of grid: %s" % height)
 
     def checklines(self, grid):
@@ -81,20 +83,25 @@ class AI:
         # So the I block actually takes up 8 x spaces when it's vertical, not 4.
         return int(holes / 2)
 
-    def checkheight(self, grid):
+    def checkheight(self, grid, cb=False):
         # We check the height of the grid.
         # All we do is get all x's from each y, then check how many y's are on each x position.
-        total = 0
-        xlist = {}
+        # In order to account for holes, we start the total sum with checkholes()
+        total = self.checkholes(grid)
+        xlist = []
+        temp = []
         for y in grid:
             xes = self.window.extractxes(grid, y)
             # Now, all these x values are inside this y value.
             for x in xes:
-                try:
-                    xlist[x].append(y)
-                except KeyError:
-                    xlist[x] = [y]
-        # Now we have a dictionary.
+                temp.append(y)
+            xlist.append(temp)
+            temp = []
+        # Now we have a list.
         for x in xlist:
-            total += len(xlist[x])
+            total += len(x)
         return int(total / 2)
+
+    def checkbumpiness(self, grid):
+        bumpiness = self.checkheight(grid, True)
+        return bumpiness

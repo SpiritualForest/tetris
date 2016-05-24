@@ -32,7 +32,7 @@ class Game:
         self.pause = False
         self.blockObj = None
         self.lines = 0
-        self.interval = 1 # time that has to pass between each automatic downwards movement of a block
+        self.interval = 1 # time in seconds that has to pass between each automatic downwards movement of a block
         self.nextautomove = time.time() + self.interval
         self.downpress = 0 # used to enable the player to force-drop a block.
         self.movementOrigin = O_GAME
@@ -199,7 +199,7 @@ class Game:
                         return
                 else:
                     # Interval passed. Block can no longer be moved. Drop it.
-                    # Call the AI's computation method for testing purpose
+                    # Call the AI's computation method for testing purposes
                     self.aiObject.computeHeuristics()
                     self.dropblock()
                     return
@@ -229,7 +229,8 @@ class Game:
                 newxes = []
             # Check for line completion
             if not add:
-                # These changes are not designated to be permanent.
+                # These changes are not designated to be permanent,
+                # therefore we shouldn't reach line completion checks here.
                 continue
             completed = False
             if self.isCompleted(y):
@@ -240,7 +241,9 @@ class Game:
                     self.interval = self.interval - 0.250
             if completed:
                 self.windowObject.redraw()
-        if add: self.setBlock(None)
+        if add:
+            # If permanent, the block's reference is removed, as it is no longer needed.
+            self.setBlock(None)
     
     def undrop(self):
         # "undrops" a block. As in, rolls back the changes made to the grid.
@@ -255,7 +258,6 @@ class Game:
             for x in xes:
                 positions = (x, self.blockObj.colour)
                 self.windowObject.grid[y].remove(positions)
-                debug.debug("Removing %s: (%s, %s) from the grid." % (y, x, self.blockObj.colour))
 
     def isCompleted(self, y):
         # The grid is a dictionary of y: (x, c) tuples with "c" being a colour code.
