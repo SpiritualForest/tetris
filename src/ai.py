@@ -98,23 +98,3 @@ class AI:
         for x in xlist:
             total += len(xlist[x])
         return int(total / 2)
-
-    def addblock(self, grid):
-        # Adds the block to the given grid, returns the result
-        coordinates = self.blockObj.coordinates
-        for y in coordinates:
-            # First we have to add all the block's coordinates to the grid.
-            xes = coordinates[y]
-            newxes = []
-            # generate the x: c for the grid. View window.py for more info.
-            for x in xes:
-                positions = (x, self.blockObj.colour)
-                newxes.append(positions)
-                try:
-                    # Try to extend the y position on the grid
-                    grid[y].extend(newxes)
-                except KeyError:
-                    # y position doesn't exist. We must create it.
-                    grid[y] = newxes
-                newxes = []
-        return grid
