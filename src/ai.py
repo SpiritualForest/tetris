@@ -10,13 +10,13 @@
 # 4. Bumpiness (minimize)
 
 import curses
-import copy
 import debug
 
 class AI:
-    def __init__(self, window):
-        # Window is the game's window object
-        self.window = window
+    def __init__(self, game):
+        # The AI has access to its game object, allowing it to directly call methods in order to move and rotate the block, etc.
+        self.game = game 
+        self.window = game.windowObject
         self.command = None
 
     def setBlock(self, block):
@@ -35,13 +35,16 @@ class AI:
         return self.command
 
     def computeHeuristics(self):
-        # First we generate the new grid based on the game's actual grid.
-        # However, there is no permanent modification to the game's real grid.
-        grid = copy.deepcopy(self.window.grid)
-        self.addblock(grid)
+        # Encapsulation function for computing the various heuristics.
+        grid = self.window.grid
+        self.game.dropblock(False) # False indicates that the changes are temporary.
+        # Actual checks
         lines = self.checklines(grid)
         holes = self.checkholes(grid)
         height = self.checkheight(grid)
+        # bumpiness = self.checkbumpiness(grid)
+        # NOTE: Remember to undrop the block!
+        self.game.undrop()
         if lines:
             debug.debug("AI detected completed lines: %s" % lines)
         if holes:
@@ -72,13 +75,15 @@ class AI:
                     x = xtuple[0]
                     exes = self.window.extractxes(grid, y+1) # "Extracted xes"
                     if x not in exes:
-                        # Hole?
+                        # Hole detected.
                         holes += 1
-        return holes
+        # We divide by two because each "x unit" of a block is actually made up of 2 x positions.
+        # So the I block actually takes up 8 x spaces when it's vertical, not 4.
+        return int(holes / 2)
 
     def checkheight(self, grid):
         # We check the height of the grid.
-        # All we do is get all x's from each y and sum them.
+        # All we do is get all x's from each y, then check how many y's are on each x position.
         total = 0
         xlist = {}
         for y in grid:

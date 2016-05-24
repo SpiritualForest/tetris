@@ -10,7 +10,7 @@ import window
 import debug
 
 # TODO: implement levels and AI. Improve display. Add stats.
-# TODO: allow game.dropblock() to be triggered when a user repeatedly presses down key on a collision.
+# TODO: AI should have access to its own game object to allow it to directly control it.
 
 # Movement origins - we need this to determine whether the player caused the move,
 # or the game moved the blocks downwards automatically.
@@ -125,6 +125,7 @@ class Game:
     def handleInput(self):
         # This method handles input.
         # It can take input either from a human player, or an AI.
+        # FIXME: clear window on pause, redraw on resume.
         key = None
         if self.humanplayer:
             r, w, e = select.select([sys.stdin], [], [], 0.01)
@@ -205,7 +206,7 @@ class Game:
         # Clear the object's previous coordinates from the screen.
         self.windowObject.clearCoordinates(self.blockObj.oldcoordinates)
 
-    def dropblock(self):
+    def dropblock(self, add=True):
         # This is from the game's automatic drop.
         # This means that the "movement interval" elapsed
         # and we need to check for line completion, and spawn a new block.
@@ -227,6 +228,9 @@ class Game:
                     self.windowObject.grid[y] = newxes
                 newxes = []
             # Check for line completion
+            if not add:
+                # These changes are not designated to be permanent.
+                continue
             completed = False
             if self.isCompleted(y):
                 self.removeline(y)
@@ -236,8 +240,23 @@ class Game:
                     self.interval = self.interval - 0.250
             if completed:
                 self.windowObject.redraw()
-        self.setBlock(None)
+        if add: self.setBlock(None)
     
+    def undrop(self):
+        # "undrops" a block. As in, rolls back the changes made to the grid.
+        # The block is always the current block, because this method is only used by AI to experiment with changes.
+        if not self.blockObj:
+            # For some reason the block is None
+            debug.debug("Attemped to undrop a block which was already set to None.")
+            return
+        coordinates = self.blockObj.coordinates
+        for y in coordinates:
+            xes = coordinates[y]
+            for x in xes:
+                positions = (x, self.blockObj.colour)
+                self.windowObject.grid[y].remove(positions)
+                debug.debug("Removing %s: (%s, %s) from the grid." % (y, x, self.blockObj.colour))
+
     def isCompleted(self, y):
         # The grid is a dictionary of y: (x, c) tuples with "c" being a colour code.
         # This function checks if the amount of tuples in grid line "y" is equal to the width of the window.

@@ -42,6 +42,7 @@ def menu(maxyx):
         # if handleInput() returned False, we continue to loop,
         continue
     win.window.clear()
+    win.window.refresh()
     return win.choice 
 
 def createGame(stdscr, *types):
@@ -60,7 +61,7 @@ def createGame(stdscr, *types):
             # AI game. Pass False to indicate it's not a human-controlled game.
             # Also create an AI object and set it.
             gameObject = game.Game(stdscr, human=False)
-            gameObject.aiObject = ai.AI(gameObject.windowObject)
+            gameObject.aiObject = ai.AI(gameObject)
         # Run the game and append it to the running games list.
         gameObject.gamerunning = True
         games.append(gameObject)
@@ -84,7 +85,7 @@ def main():
                 games.extend(createGame(stdscr, game.GT_SINGLE))
                 # For AI testing purposes, we'll add an AI object to this game.
                 go = games[0]
-                go.aiObject = ai.AI(go.windowObject)
+                go.aiObject = ai.AI(go)
                 gameinprogress = True
             elif gametype == game.GT_AI:
                 # Watch AI.
