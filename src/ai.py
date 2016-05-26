@@ -82,26 +82,42 @@ class AI:
         # We divide by two because each "x unit" of a block is actually made up of 2 x positions.
         # So the I block actually takes up 8 x spaces when it's vertical, not 4.
         return int(holes / 2)
-
-    def checkheight(self, grid, cb=False):
-        # We check the height of the grid.
-        # All we do is get all x's from each y, then check how many y's are on each x position.
-        # In order to account for holes, we start the total sum with checkholes()
-        total = self.checkholes(grid)
+    
+    def formxlist(self, grid):
+        # Forms the "x list" so we can calculate height and bumpiness
         xlist = []
         temp = []
+        add = True
         for y in grid:
-            xes = self.window.extractxes(grid, y)
-            # Now, all these x values are inside this y value.
-            for x in xes:
-                temp.append(y)
-            xlist.append(temp)
-            temp = []
+            if add:
+                # Since each column is made up of two x positions and one y position, we don't need to add both.
+                # We skip over one of them each time.
+                xes = self.window.extractxes(grid, y)
+                for x in xes:
+                    temp.append(y)
+                xlist.append(temp)
+                temp = []
+                add = False
+            else:
+                add = True
+        return xlist
+
+    def checkheight(self, grid):
+        # We check the height of the grid.
+        # In order to account for holes, we start the total sum with checkholes()
+        total = self.checkholes(grid)
+        xlist = self.formxlist(grid)
         # Now we have a list.
         for x in xlist:
             total += len(x)
-        return int(total / 2)
+        return total
 
     def checkbumpiness(self, grid):
-        bumpiness = self.checkheight(grid, True)
-        return bumpiness
+        # Here we compute the absolute value of between all two adjacent columns.
+        # We check holes as well in order to account for them.
+        xlist = self.formxlist(grid)
+        total = self.checkholes(grid)
+        for i, x in enumerate(xlist[::2]):
+            length = len(x) - len(xlist[i + 1])
+            total += length
+        return total
