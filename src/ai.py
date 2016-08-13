@@ -108,9 +108,7 @@ class AI:
         total = self.checkholes(grid)
         xlist = self.formxlist(grid)
         # Now we have a list.
-        for x in xlist:
-            total += len(x)
-        return total
+        return sum(len(x) for x in xlist)
 
     def checkbumpiness(self, grid):
         # Here we compute the absolute value of between all two adjacent columns.
@@ -118,6 +116,9 @@ class AI:
         xlist = self.formxlist(grid)
         total = self.checkholes(grid)
         for i, x in enumerate(xlist[::2]):
-            length = len(x) - len(xlist[i + 1])
-            total += length
+            try:
+                length = len(x) - len(xlist[i + 1])
+                total += length
+            except IndexError:
+                total += len(xlist[i])
         return total
