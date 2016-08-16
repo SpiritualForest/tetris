@@ -27,6 +27,7 @@ class Game:
     def __init__(self, stdscr, **kwargs):
         # We only use kwargs to determine if it's a human player or not.
         self.maxyx = stdscr.getmaxyx()
+        self.stdscr = stdscr # We need this for drawing the line count
         self.createWindows(stdscr)
         self.gamerunning = False
         self.pause = False
@@ -240,6 +241,8 @@ class Game:
                     # Another 10 lines. Decrease the interval by 100 milliseconds
                     self.interval = self.interval - 0.250
             if completed:
+                # TODO: Line count drawing hack - should change this.
+                self.stdscr.addstr(self.windowObject.beginy + 10, self.windowObject.beginx - 11, "Lines: %s" % self.lines);
                 self.windowObject.redraw()
         if add:
             # If permanent, the block's reference is removed, as it is no longer needed.
