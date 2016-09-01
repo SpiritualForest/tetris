@@ -80,6 +80,9 @@ class Game:
             self.aiObject.setBlock(blockObject)
         else:
             # Draw the block on the window, automatically move, take input
+            oldies = self.blockObj.oldcoordinates
+            if oldies:
+                self.windowObject.clearCoordinates(oldies)
             self.windowObject.draw(self.blockObj.coordinates, self.blockObj.colour)
             if self.pause:
                 # We still need to take input when the game paused, otherwise we can't unpause.
@@ -181,11 +184,11 @@ class Game:
             # Down
             collision = self.isyCollision()
             if not collision:
-                self.blockObj.move(block.D_DOWN)
                 if self.movementOrigin == O_PLAYER:
                     # Player moved this, so reset the automove interval.
                     self.nextautomove = time.time() + self.interval
                     self.moved = True
+                self.blockObj.move(block.D_DOWN)
             else:
                 # Collision. What is the movement's origin?
                 if self.movementOrigin == O_PLAYER:
@@ -205,7 +208,7 @@ class Game:
                     self.dropblock()
                     return
         # Clear the object's previous coordinates from the screen.
-        self.windowObject.clearCoordinates(self.blockObj.oldcoordinates)
+        #self.windowObject.clearCoordinates(self.blockObj.oldcoordinates)
 
     def dropblock(self, add=True):
         # This is from the game's automatic drop.
@@ -233,17 +236,13 @@ class Game:
                 # These changes are not designated to be permanent,
                 # therefore we shouldn't reach line completion checks here.
                 continue
-            completed = False
             if self.isCompleted(y):
+                # Remove line and redraw the window.
                 self.removeline(y)
-                completed = True
-                if self.lines % 10 == 0:
-                    # Another 10 lines. Decrease the interval by 100 milliseconds
-                    self.interval = self.interval - 0.250
-            if completed:
-                # TODO: Line count drawing hack - should change this.
-                self.stdscr.addstr(self.windowObject.beginy + 10, self.windowObject.beginx - 11, "Lines: %s" % self.lines);
+                self.interval -= 0.010
                 self.windowObject.redraw()
+                # Draw the updated amount of lines
+                self.stdscr.addstr(self.windowObject.beginy + 10, self.windowObject.beginx - 11, "Lines: %s" % self.lines);
         if add:
             # If permanent, the block's reference is removed, as it is no longer needed.
             self.setBlock(None)
